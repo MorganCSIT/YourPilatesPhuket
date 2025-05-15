@@ -760,3 +760,171 @@ ul {
     text-align: center;
   }
 }
+
+/* Account Management Form Styles */
+.account-form-section {
+ padding: calc(var(--spacing-unit) * 4) 0;
+ background-color: #ffffff; /* or light-gray if preferred */
+}
+
+.account-form-container {
+ max-width: 600px;
+ margin: 0 auto;
+ background-color: var(--light-gray); /* A light background for the form itself */
+ padding: calc(var(--spacing-unit) * 2.5);
+ border-radius: 8px;
+ box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.account-form-container h2 {
+ text-align: center;
+ margin-bottom: calc(var(--spacing-unit) * 2);
+ color: var(--primary-color);
+}
+
+.form-group {
+ margin-bottom: calc(var(--spacing-unit) * 1.5);
+}
+
+.form-group label {
+ display: block;
+ margin-bottom: calc(var(--spacing-unit) * 0.5);
+ font-weight: 600;
+ color: var(--text-color);
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"] {
+ width: 100%;
+ padding: calc(var(--spacing-unit) * 0.8);
+ border: 1px solid var(--border-color);
+ border-radius: 4px;
+ font-family: var(--font-primary);
+ font-size: 1rem;
+}
+
+/* Use existing button styles for form buttons */
+.account-form-container .button-primary, .account-form-container .button-secondary {
+ width: auto; /* Allow button to size naturally */
+ margin-top: calc(var(--spacing-unit) * 1);
+ margin-right: calc(var(--spacing-unit) * 0.5); /* Space between multiple buttons */
+}
+
+/* Authentication Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent dark overlay */
+  display: flex; /* Use flexbox to center content */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  z-index: 1000; /* Ensure it's above other content */
+  overflow-y: auto; /* Allow scrolling if content is tall */
+  padding: var(--spacing-unit); /* Add some padding around modal content */
+}
+
+.modal-content {
+  background-color: #ffffff;
+  padding: calc(var(--spacing-unit) * 2.5);
+  border-radius: 8px;
+  max-width: 500px;
+  width: 100%; /* Make it responsive */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  position: relative; /* For positioning the close button */
+  text-align: center; /* Center text content */
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  margin-bottom: calc(var(--spacing-unit) * 2);
+  color: var(--primary-color);
+  font-size: 1.8rem;
+}
+
+.modal-content form div {
+  margin-bottom: calc(var(--spacing-unit) * 1.5);
+  text-align: left; /* Align form elements to the left */
+}
+
+.modal-content label {
+  display: block;
+  margin-bottom: calc(var(--spacing-unit) * 0.5);
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.modal-content input[type="email"],
+.modal-content input[type="password"],
+.modal-content input[type="text"] {
+  width: 100%;
+  padding: calc(var(--spacing-unit) * 0.8);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-family: var(--font-primary);
+  font-size: 1rem;
+}
+
+.modal-content button[type="submit"] {
+  width: 100%; /* Full width button */
+  padding: calc(var(--spacing-unit) * 0.8);
+  background-color: var(--secondary-color);
+  color: var(--text-on-dark);
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.modal-content button[type="submit"]:hover {
+  background-color: #b08d68; /* Darker shade of secondary */
+}
+
+.modal-toggle-link {
+  margin-top: calc(var(--spacing-unit) * 1.5);
+  font-size: 0.9rem;
+  color: var(--text-light);
+}
+
+.modal-toggle-link a {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+.modal-toggle-link a:hover {
+  color: var(--secondary-color);
+}
+
+.error-message {
+  color: #dc3545; /* Red color for errors */
+  font-size: 0.9rem;
+  margin-top: calc(var(--spacing-unit) * 0.5);
+  text-align: center;
+}
+
+/* Close button */
+.modal-content .close-button {
+  position: absolute;
+  top: calc(var(--spacing-unit) * 0.8);
+  right: calc(var(--spacing-unit) * 0.8);
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #aaaaaa;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.modal-content .close-button:hover,
+.modal-content .close-button:focus {
+  color: #777777;
+}
+
+/* Optional: Styles for the account content sections */
+.account-section {
+  padding: calc(var(--spacing-unit) * 3) 0; /* Padding for the account content area */
+}

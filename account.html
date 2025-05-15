@@ -6,157 +6,12 @@
     <title>My Account - YourPilates.Phuket</title>
 
     <!-- Link to your existing core CSS file -->
-    <link rel="stylesheet" href="path/to/your/styles.css" />
-
+    <link rel="stylesheet" href="new_styles.css" />
+ 
     <!-- Optional: Link to a specific CSS file for account/modal styling if you create one -->
     <link rel="stylesheet" href="path/to/your/account-modal-styles.css" />
 
-    <style>
-      /* Basic modal styling - You should move this to your CSS file(s) later */
-      .modal-overlay {
-        display: none; /* Hidden by default */
-        position: fixed; /* Stay in place */
-        z-index: 1000; /* Sit on top */
-        left: 0;
-        top: 0;
-        width: 100%; /* Full width */
-        height: 100%; /* Full height */
-        overflow: auto; /* Enable scroll if needed */
-        background-color: rgb(0, 0, 0); /* Fallback color */
-        background-color: rgba(0, 0, 0, 0.7); /* Black w/ opacity */
-        display: flex; /* Use flexbox for centering */
-        justify-content: center;
-        align-items: center;
-      }
-
-      .modal-content {
-        background-color: #fefefe;
-        margin: auto; /* Auto margins help with centering in block layout, but flexbox is better */
-        padding: 30px;
-        border: 1px solid #888;
-        width: 80%; /* Could be responsive */
-        max-width: 500px; /* Max width */
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        text-align: center; /* Center modal content */
-      }
-
-      .modal-content h2 {
-        margin-top: 0;
-        margin-bottom: 20px;
-        color: #333; /* Example text color */
-      }
-
-      .modal-content form {
-        display: flex;
-        flex-direction: column;
-        gap: 15px; /* Space between form elements */
-      }
-
-      .modal-content input[type="email"],
-      .modal-content input[type="password"],
-      .modal-content input[type="text"] {
-        padding: 12px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 16px;
-      }
-
-      .modal-content button {
-        padding: 12px 20px;
-        background-color: #007bff; /* Example primary button color */
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-        transition: background-color 0.3s ease; /* Smooth hover effect */
-      }
-
-      .modal-content button:hover {
-        background-color: #0056b3;
-      }
-
-      .modal-toggle-link {
-        margin-top: 15px;
-        cursor: pointer;
-        color: #007bff;
-        text-decoration: underline;
-        font-size: 14px;
-      }
-
-      .modal-toggle-link:hover {
-        color: #0056b3;
-      }
-
-      /* Initially hide the account content */
-      #account-content {
-        display: none;
-        padding: 20px; /* Add some padding */
-      }
-
-      #account-content h1,
-      #account-content h2 {
-        color: #333; /* Example text color */
-        margin-bottom: 15px;
-      }
-
-      .slot-item {
-        border: 1px solid #eee;
-        padding: 15px;
-        margin-bottom: 10px;
-        border-radius: 5px;
-        display: flex;
-        flex-wrap: wrap; /* Allow wrapping on smaller screens */
-        justify-content: space-between;
-        align-items: center;
-        background-color: #f9f9f9; /* Slight background */
-      }
-
-      .slot-item p {
-        margin: 0;
-        flex-grow: 1; /* Allow text to take up space */
-        margin-right: 10px; /* Space between text and button */
-      }
-
-      .slot-item button {
-        padding: 8px 15px;
-        background-color: #28a745; /* Example success color */
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background-color 0.3s ease;
-      }
-
-      .slot-item button:hover {
-        background-color: #218838;
-      }
-
-      #auth-error-message,
-      #auth-reg-error-message {
-        color: red;
-        margin-top: 15px;
-        font-size: 14px;
-      }
-
-      #logout-button {
-        margin-top: 20px;
-        padding: 10px 15px;
-        background-color: #dc3545; /* Example danger color */
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background-color 0.3s ease;
-      }
-
-      #logout-button:hover {
-        background-color: #c82333;
-      }
-    </style>
+    
   </head>
   <body>
     <!-- Include your website's header/navigation here -->
@@ -194,7 +49,7 @@
 
       <!-- Authentication Modal -->
       <!-- This div will be shown/hidden by JavaScript -->
-      <div id="auth-modal" class="modal-overlay">
+ <div id="auth-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
           <!-- Login Form Container -->
           <div id="login-form-container">
@@ -270,7 +125,7 @@
         and service instances being globally available (if you use that approach).
     -->
     <script type="module">
-      // Import the functions you need from the SDKs you need
+ // Import the functions you need from the SDKs you need
       // Use the specific version you prefer (e.g., 9.22.2 or 11.7.3)
       import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
       import {
@@ -290,6 +145,7 @@
         orderBy,
         getDocs,
         runTransaction,
+        setDoc, // Added setDoc for creating user document on registration
       } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
       import {
         getFunctions,
@@ -299,12 +155,13 @@
 
       // Your web app's Firebase configuration
       const firebaseConfig = {
-        apiKey: "YOUR_API_KEY", // <--- REPLACE WITH YOUR ACTUAL API KEY
-        authDomain: "YOUR_AUTH_DOMAIN", // <--- REPLACE WITH YOUR ACTUAL AUTH DOMAIN
-        projectId: "YOUR_PROJECT_ID", // <--- REPLACE WITH YOUR ACTUAL PROJECT ID
-        storageBucket: "YOUR_STORAGE_BUCKET", // <--- REPLACE WITH YOUR ACTUAL STORAGE BUCKET
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // <--- REPLACE WITH YOUR ACTUAL MESSAGING SENDER ID
-        appId: "YOUR_APP_ID", // <--- REPLACE WITH YOUR ACTUAL APP ID
+        apiKey: "AIzaSyDVx5hMUh6euQ1M7zF7tAo1nr_Kv4D17jE",
+        authDomain: "yourpilatesphuket.firebaseapp.com",
+        projectId: "yourpilatesphuket",
+        storageBucket: "yourpilatesphuket.firebasestorage.app",
+        messagingSenderId: "452901193256",
+        appId: "1:452901193256:web:18997b96ad7152ccad571d",
+        measurementId: "G-PR8WTBM61S", // <--- REPLACE WITH YOUR ACTUAL APP ID
         // measurementId: "YOUR_MEASUREMENT_ID" // <--- REPLACE IF PROVIDED
       };
 
@@ -363,7 +220,7 @@
       // Function to show the authentication modal
       function showAuthModal() {
         authModal.style.display = "flex"; // Use flex to center content
-        loginFormContainer.style.display = "block"; // Default to showing login form
+ loginFormContainer.style.display = "block"; // Default to showing login form
         registerFormContainer.style.display = "none";
         authErrorMessage.textContent = ""; // Clear any previous errors
         authRegErrorMessage.textContent = "";
@@ -380,7 +237,7 @@
           const targetId = this.dataset.target;
           if (targetId === "register-form-container") {
             loginFormContainer.style.display = "none";
-            registerFormContainer.style.display = "block";
+ registerFormContainer.style.display = "block";
             authErrorMessage.textContent = ""; // Clear login errors when switching
           } else {
             registerFormContainer.style.display = "none";
@@ -480,6 +337,7 @@
 
       // --- Function to handle Auth State Changes ---
       // This function is called by the onAuthStateChanged listener below
+ // and can also be called from account.js if you move the listener there.
       // and can also be called from account.js if you move the listener there.
       window.handleAuthStateChange = async (user) => {
         if (user) {
@@ -524,7 +382,7 @@
             await setDoc(doc(db, "users", user.uid), {
               email: user.email,
               name: "",
-              credits: 0,
+ credits: 0,
             });
             console.log("Created missing user document for:", user.uid);
           }
@@ -568,7 +426,7 @@
 
             slotElement.innerHTML = `
                   <p>${startTime} - ${endTime} (${slot.studio}) - Cost: ${slot.cost} credits</p>
-                  <button class="book-slot-button" data-slot-id="${doc.id}" data-cost="${slot.cost}">Book Now</button>
+ <button class="book-slot-button" data-slot-id="${doc.id}" data-cost="${slot.cost}">Book Now</button>
                 `;
             availableSlotsList.appendChild(slotElement);
           });
