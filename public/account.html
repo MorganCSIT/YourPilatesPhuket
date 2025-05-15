@@ -36,6 +36,42 @@
           <strong id="credit-balance">Loading...</strong>
         </p>
 
+        <!-- Purchase Credits Form -->
+        <section id="purchase-credits-section">
+          <h2>Purchase Credits</h2>
+          <form id="purchase-credits-form">
+            <div>
+              <label for="credit-package">Select Package:</label>
+              <select id="credit-package" name="credit-package" required>
+                <option value="" disabled selected>--Choose a package--</option>
+                <option value="package1">10 Credits - 500 THB</option>
+                <option value="package2">
+                  25 Credits - 1125 THB (10% off)
+                </option>
+                <option value="package3">
+                  50 Credits - 2000 THB (20% off)
+                </option>
+              </select>
+            </div>
+            <div>
+              <label for="payment-proof">Upload Payment Proof (Image):</label>
+              <input
+                type="file"
+                id="payment-proof"
+                name="payment-proof"
+                accept="image/*"
+                required
+              />
+            </div>
+            <button type="submit" id="submit-purchase-request">
+              Submit Purchase Request
+            </button>
+            <p id="purchase-message"></p>
+            <!-- For success/error messages -->
+          </form>
+        </section>
+        <!-- End Purchase Credits Form -->
+
         <h2>Available Booking Slots</h2>
         <div id="available-slots-list">
           <p>Loading available slots...</p>
@@ -144,11 +180,18 @@
         getDocs,
         runTransaction,
         setDoc, // Added setDoc for creating user document on registration
+        serverTimestamp, // Import serverTimestamp
       } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
       import {
         getFunctions,
         httpsCallable,
       } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-functions.js";
+      import {
+        getStorage,
+        ref as storageRef, // Use 'ref as storageRef' to avoid conflict with 'ref' from Firestore if you use it elsewhere
+        uploadBytesResumable,
+        getDownloadURL,
+      } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
       // import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-analytics.js"; // Uncomment if you need analytics
 
       // Your web app's Firebase configuration
@@ -170,11 +213,13 @@
       const auth = getAuth(app);
       const db = getFirestore(app);
       const functions = getFunctions(app); // Make sure you have deployed functions
+      const storage = getStorage(app); // Initialize Firebase Storage
 
       // Make service instances globally available for other scripts (if not using modules everywhere)
       window.auth = auth;
       window.db = db;
       window.functions = functions;
+      window.storage = storage; // Make storage instance globally available
 
       // Optional: Make specific Firebase functions global if needed in other scripts
       window.onAuthStateChanged = onAuthStateChanged;
@@ -190,6 +235,8 @@
       window.getDocs = getDocs; // Firestore getDocs
       window.runTransaction = runTransaction; // Firestore transaction
       window.httpsCallable = httpsCallable; // Functions httpsCallable
+      window.setDoc = setDoc; // Make setDoc globally available (already imported but good for explicitness if other scripts use it)
+      window.serverTimestamp = serverTimestamp; // Make serverTimestamp globally available
 
       // --- Basic Account Page Logic (can be moved to account.js) ---
 
@@ -214,6 +261,32 @@
         "available-slots-list"
       );
       const logoutButton = document.getElementById("logout-button");
+
+      // Elements for Purchase Credits Form
+      const purchaseCreditsForm = document.getElementById(
+        "purchase-credits-form"
+      );
+      const creditPackageSelect = document.getElementById("credit-package");
+      const paymentProofInput = document.getElementById("payment-proof");
+      const purchaseMessage = document.getElementById("purchase-message");
+      const submitPurchaseButton = document.getElementById(
+        "submit-purchase-request"
+      );
+
+      // Define package details (could also be fetched from Firestore)
+      const creditPackages = {
+        package1: { name: "10 Credits Pack", cost: 500, credits: 10 },
+        package2: {
+          name: "25 Credits Pack (10% off)",
+          cost: 1125,
+          credits: 25,
+        },
+        package3: {
+          name: "50 Credits Pack (20% off)",
+          cost: 2000,
+          credits: 50,
+        },
+      };
 
       // Function to show the authentication modal
       function showAuthModal() {
@@ -333,173 +406,165 @@
         }
       });
 
-      // --- Function to handle Auth State Changes ---
-      // This function is called by the onAuthStateChanged listener below
-      // and can also be called from account.js if you move the listener there.
-      // and can also be called from account.js if you move the listener there.
-      window.handleAuthStateChange = async (user) => {
+      // Function to update UI for authenticated user
+      async function updateUserUI(user) {
+        accountContent.style.display = "block";
+        hideAuthModal();
+        welcomeMessage.textContent = `Welcome, ${user.email || "User"}!`; // Use email or a generic "User"
+
+        // Fetch user data from Firestore
         if (user) {
-          // User is signed in, show account content and hide modal
-          accountContent.style.display = "block";
-          hideAuthModal();
-          console.log("User signed in:", user.uid); // Log user ID
-
-          // Fetch and display user data
-          fetchUserData(user);
-
-          // Fetch and display available slots
-          fetchAvailableSlots();
-        } else {
-          // User is signed out, hide account content and show modal
-          accountContent.style.display = "none";
-          showAuthModal();
-          console.log("User signed out."); // Log sign out
-        }
-      };
-
-      // --- Fetch and Display User Data ---
-      async function fetchUserData(user) {
-        try {
-          // Use the global db object (or import if account.js is a module)
           const userDocRef = doc(db, "users", user.uid);
-          const userDoc = await getDoc(userDocRef);
-
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            welcomeMessage.textContent = `Welcome, ${
-              userData.name || user.email
-            }!`;
-            creditBalance.textContent =
-              userData.credits !== undefined ? userData.credits : "N/A"; // Handle case where credits might not be set yet
-          } else {
-            // User document doesn't exist - this shouldn't happen if created on registration
-            console.warn("User document not found for UID:", user.uid);
-            welcomeMessage.textContent = `Welcome, ${user.email}!`; // Still welcome by email
-            creditBalance.textContent = "0"; // Assume 0 credits if doc missing
-            // You might want to create the user document here if it's missing for some reason
-            await setDoc(doc(db, "users", user.uid), {
-              email: user.email,
-              name: "",
-              credits: 0,
-            });
-            console.log("Created missing user document for:", user.uid);
+          try {
+            const docSnap = await getDoc(userDocRef);
+            if (docSnap.exists()) {
+              const userData = docSnap.data();
+              creditBalance.textContent =
+                userData.credits !== undefined ? userData.credits : 0;
+              // You can also update welcome message with displayName if you store it
+              // welcomeMessage.textContent = `Welcome, ${userData.displayName || user.email}!`;
+            } else {
+              // This case might occur if the user document wasn't created on registration
+              // Or if this is the first login and it needs to be created.
+              console.log(
+                "User document does not exist. Displaying 0 credits."
+              );
+              creditBalance.textContent = 0;
+              // Optionally, create the user document here if it's missing and it's expected to be.
+              // For example, on first login after registration:
+              // try {
+              //   await setDoc(userDocRef, { email: user.email, credits: 0, createdAt: serverTimestamp() });
+              //   console.log("User document created with initial credits.");
+              // } catch (error) {
+              //   console.error("Error creating user document on the fly:", error);
+              // }
+            }
+          } catch (error) {
+            console.error("Error fetching user data from Firestore:", error);
+            creditBalance.textContent = "Error loading credits";
           }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-          // Display an error message to the user on the page
-          welcomeMessage.textContent = `Welcome, ${user.email}!`;
-          creditBalance.textContent = "Error loading credits.";
         }
       }
 
-      // --- Fetch and Display Available Slots ---
-      async function fetchAvailableSlots() {
-        try {
-          // Use the global db object (or import if account.js is a module)
-          const slotsCollectionRef = collection(db, "slots");
-          const q = query(
-            slotsCollectionRef,
-            where("isBooked", "==", false),
-            orderBy("startTime")
-          );
+      // Function to update UI for logged out user
+      function updateUIAfterLogout() {
+        accountContent.style.display = "none";
+        showAuthModal();
+        welcomeMessage.textContent = "Welcome, User!"; // Reset
+        creditBalance.textContent = "Loading..."; // Reset
+      }
 
-          const slotsSnapshot = await getDocs(q);
+      // --- Main Auth State Listener ---
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          // User is signed in.
+          console.log("User signed in:", user.uid, user.email);
+          updateUserUI(user);
+          // Here you would typically load user-specific data, show account details, etc.
+          // For example, fetch their credit balance, booking history.
+        } else {
+          // User is signed out.
+          console.log("User signed out.");
+          updateUIAfterLogout();
+        }
+      });
 
-          availableSlotsList.innerHTML = ""; // Clear previous list
-
-          if (slotsSnapshot.empty) {
-            availableSlotsList.innerHTML =
-              "<p>No available slots at the moment.</p>";
+      // Handle Purchase Credits Form Submission
+      if (purchaseCreditsForm) {
+        purchaseCreditsForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const currentUser = auth.currentUser;
+          if (!currentUser) {
+            purchaseMessage.textContent =
+              "You must be logged in to make a purchase.";
+            purchaseMessage.style.color = "red";
             return;
           }
 
-          slotsSnapshot.forEach((doc) => {
-            const slot = doc.data();
-            const slotElement = document.createElement("div");
-            slotElement.classList.add("slot-item"); // Add a class for styling
+          const selectedPackageId = creditPackageSelect.value;
+          const file = paymentProofInput.files[0];
 
-            // Format the timestamp
-            const startTime = slot.startTime.toDate().toLocaleString();
-            const endTime = slot.endTime.toDate().toLocaleString();
-
-            slotElement.innerHTML = `
-                  <p>${startTime} - ${endTime} (${slot.studio}) - Cost: ${slot.cost} credits</p>
- <button class="book-slot-button" data-slot-id="${doc.id}" data-cost="${slot.cost}">Book Now</button>
-                `;
-            availableSlotsList.appendChild(slotElement);
-          });
-
-          // Add event listeners to book buttons
-          document.querySelectorAll(".book-slot-button").forEach((button) => {
-            button.addEventListener("click", handleBooking);
-          });
-        } catch (error) {
-          console.error("Error fetching available slots:", error);
-          availableSlotsList.innerHTML =
-            "<p>Error loading available slots.</p>";
-        }
-      }
-
-      // --- Handle Booking (Client-side part) ---
-      async function handleBooking(event) {
-        const slotId = event.target.dataset.slotId;
-        const slotCost = parseInt(event.target.dataset.cost, 10);
-        const currentUser = auth.currentUser; // Use the global auth object
-
-        if (!currentUser) {
-          console.error("No authenticated user.");
-          showAuthModal();
-          return;
-        }
-
-        // Disable the button to prevent multiple clicks
-        event.target.disabled = true;
-        event.target.textContent = "Booking...";
-
-        // Client-side quick check for credits (the server function will re-check securely)
-        const userDocRef = doc(db, "users", currentUser.uid); // Use global db and doc
-        const userDoc = await getDoc(userDocRef); // Use global getDoc
-        if (!userDoc.exists() || userDoc.data().credits < slotCost) {
-          alert("You don't have enough credits to book this slot.");
-          event.target.disabled = false; // Re-enable button
-          event.target.textContent = "Book Now";
-          return;
-        }
-
-        // Call the Cloud Function to handle the booking
-        try {
-          // Use the global functions object and httpsCallable
-          const bookSlotCallable = httpsCallable(functions, "bookSlot");
-          const result = await bookSlotCallable({ slotId: slotId });
-
-          if (result.data.success) {
-            alert("Booking successful!");
-            // Update UI: refresh user data and available slots
-            fetchUserData(currentUser);
-            fetchAvailableSlots();
-          } else {
-            alert("Booking failed: " + result.data.error);
+          if (!selectedPackageId) {
+            purchaseMessage.textContent = "Please select a credit package.";
+            purchaseMessage.style.color = "red";
+            return;
           }
-        } catch (error) {
-          console.error("Error calling bookSlot function:", error);
-          // Display a more specific error if it's an HttpsError from the function
-          if (error.code) {
-            alert(`Booking failed: ${error.message}`);
-          } else {
-            alert("An error occurred during booking. Please try again.");
-          }
-        } finally {
-          // Re-enable the button regardless of success or failure
-          event.target.disabled = false;
-          event.target.textContent = "Book Now";
-        }
-      }
 
-      // --- Firebase Auth State Listener ---
-      // This listener runs whenever the user's sign-in state changes
-      onAuthStateChanged(auth, (user) => {
-        handleAuthStateChange(user); // Call the function to update UI
-      });
+          if (!file) {
+            purchaseMessage.textContent = "Please upload a proof of payment.";
+            purchaseMessage.style.color = "red";
+            return;
+          }
+
+          submitPurchaseButton.disabled = true;
+          purchaseMessage.textContent = "Processing your request...";
+          purchaseMessage.style.color = "blue";
+
+          try {
+            // 1. Upload file to Firebase Storage
+            const filePath = `purchase_proofs/${
+              currentUser.uid
+            }/${Date.now()}_${file.name}`;
+            const fileRef = storageRef(storage, filePath);
+            const uploadTask = uploadBytesResumable(fileRef, file);
+
+            // Listen for state changes, errors, and completion of the upload.
+            uploadTask.on(
+              "state_changed",
+              (snapshot) => {
+                const progress =
+                  (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                purchaseMessage.textContent =
+                  "Upload is " + progress.toFixed(0) + "% done";
+              },
+              (error) => {
+                console.error("Upload failed:", error);
+                purchaseMessage.textContent =
+                  "File upload failed. Please try again.";
+                purchaseMessage.style.color = "red";
+                submitPurchaseButton.disabled = false;
+              },
+              async () => {
+                // Upload completed successfully, now get the download URL
+                const downloadURL = await getDownloadURL(
+                  uploadTask.snapshot.ref
+                );
+                console.log("File available at", downloadURL);
+
+                // 2. Create purchase request document in Firestore
+                const packageDetails = creditPackages[selectedPackageId];
+                const purchaseRequestRef = doc(
+                  collection(db, "purchaseRequests")
+                ); // Auto-generate ID
+
+                await setDoc(purchaseRequestRef, {
+                  userId: currentUser.uid,
+                  userEmail: currentUser.email, // Storing email for admin convenience
+                  packageId: selectedPackageId,
+                  packageName: packageDetails.name,
+                  packageCost: packageDetails.cost,
+                  creditsToGrant: packageDetails.credits,
+                  proofOfPaymentUrl: downloadURL,
+                  status: "pending_review",
+                  requestedAt: serverTimestamp(), // Make sure serverTimestamp is imported from firestore
+                });
+
+                purchaseMessage.textContent =
+                  "Purchase request submitted successfully! Admin will review it shortly.";
+                purchaseMessage.style.color = "green";
+                purchaseCreditsForm.reset(); // Reset the form
+                submitPurchaseButton.disabled = false;
+              }
+            );
+          } catch (error) {
+            console.error("Error submitting purchase request:", error);
+            purchaseMessage.textContent =
+              "Error submitting request. Please try again.";
+            purchaseMessage.style.color = "red";
+            submitPurchaseButton.disabled = false;
+          }
+        });
+      }
     </script>
 
     <!--

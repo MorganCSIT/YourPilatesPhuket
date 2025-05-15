@@ -2,8 +2,34 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
+    // Users collection
+    // - Authenticated users can read their own document.
+    // - Authenticated users can create their own document (e.g., on first sign-in if you populate it).
+    // - Only admin (or backend functions) should be able to update credits directly.
+    //   For now, we'll allow users to update their own document, but be cautious with this.
+    match /users/{userId} {
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // PurchaseRequests collection
+    // - Authenticated users can create a purchase request.
+    // - Authenticated users can read their own purchase requests.
+    // - Admin/backend would typically update the status.
+    match /purchaseRequests/{purchaseId} {
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      // Add admin rules here later for updating status
+    }
+
+    // Bookings collection
+    // - Authenticated users can create a booking if they are booking for themselves.
+    // - Authenticated users can read their own bookings.
+    match /bookings/{bookingId} {
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      // Potentially allow users to update their own bookings for cancellation.
+      // allow update: if request.auth != null && resource.data.userId == request.auth.uid;
     }
   }
 }
