@@ -258,6 +258,27 @@
 
         try {
           await signInWithEmailAndPassword(auth, email, password);
+          // After successful login and you have the user object
+   firebase.auth().onAuthStateChanged((user) => {
+     if (user) {
+       // User is signed in.
+       const uid = user.uid;
+       const adminUid = '8kGKHeMUAeXynvGA75lhODvOJ7L2'; // Use the same admin UID
+
+       if (uid === adminUid) {
+         // Admin user, show the admin link
+         document.getElementById('admin-link').style.display = 'list-item'; // or 'block' depending on your CSS
+       } else {
+         // Not admin, hide the admin link (important for when a non-admin logs out and another user logs in)
+         document.getElementById('admin-link').style.display = 'none';
+       }
+     } else {
+       // User is signed out.
+       // Hide the admin link
+       document.getElementById('admin-link').style.display = 'none';
+     }
+   });
+
           // onAuthStateChanged listener will handle UI update
         } catch (error) {
           console.error("Login Error:", error);

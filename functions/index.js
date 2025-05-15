@@ -1,5 +1,53 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const functions = require('firebase-functions');
+   const admin = require('firebase-admin');
+   const path = require('path');
+   const fs = require('fs');
+
+   // Initialize Firebase Admin if not already initialized
+   if (admin.apps.length === 0) {
+       admin.initializeApp();
+   }
+
+   exports.serveAdmin = functions.https.onRequest(async (req, res) => {
+       const idToken = req.headers.authorization?.split('Bearer ')[1];
+
+       if (!idToken) {
+           // No token, redirect to login
+           res.redirect('/account.html');
+           return;
+       }
+
+       try {
+           const decodedToken = await admin.auth().verifyIdToken(idToken);
+           const uid = decodedToken.uid;
+
+           // Replace with your actual admin UID
+           const adminUid = '8kGKHeMUAeXynvGA75lhODvOJ7L2'; 
+
+           if (uid === adminUid) {
+               // Admin user, serve the admin page
+               const adminPath = path.join(__dirname, '../public/admin.html');
+               fs.readFile(adminPath, (err, data) => {
+                   if (err) {
+                       console.error('Error reading admin.html:', err);
+                       res.status(500).send('Error loading admin page.');
+                   } else {
+                       res.status(200).send(data);
+                   }
+               });
+           } else {
+               // Not admin, redirect to account page
+               res.redirect('/account.html');
+           }
+
+       } catch (error) {
+           console.error('Error verifying token:', error);
+           res.redirect('/account.html');
+       }
+   });
+
 admin.initializeApp(); // Initialize Admin SDK
 
 const db = admin.firestore();

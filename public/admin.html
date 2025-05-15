@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - YourPilates.Phuket</title>
+    <link rel="stylesheet" href="new_styles.css">
+    <!-- You might want a separate CSS file for admin styles -->
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="account.html">Account</a></li>
+                </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="admin-dashboard">
+            <div class="container">
+                <h2>Admin Dashboard</h2>
+                <div id="user-list">
+                    <!-- User data will be loaded here -->
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Current Credits</th>
+                                <th>Add Credits</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <!-- User rows will be added here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <!-- Your footer content -->
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="firebase-init.js"></script> <!-- Your Firebase initialization file -->
+    <script src="admin.js"></script> <!-- Your admin-specific JavaScript -->
+</body>
+</html>
