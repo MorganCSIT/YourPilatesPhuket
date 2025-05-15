@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Account - YourPilates.Phuket</title>
+
+    <!-- Link to your existing core CSS file -->
+    <link rel="stylesheet" href="path/to/your/styles.css" />
+
+    <!-- Optional: Link to a specific CSS file for account/modal styling if you create one -->
+    <link rel="stylesheet" href="path/to/your/account-modal-styles.css" />
+
+    <style>
+      /* Basic modal styling - You should move this to your CSS file(s) later */
+      .modal-overlay {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1000; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0, 0, 0); /* Fallback color */
+        background-color: rgba(0, 0, 0, 0.7); /* Black w/ opacity */
+        display: flex; /* Use flexbox for centering */
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background-color: #fefefe;
+        margin: auto; /* Auto margins help with centering in block layout, but flexbox is better */
+        padding: 30px;
+        border: 1px solid #888;
+        width: 80%; /* Could be responsive */
+        max-width: 500px; /* Max width */
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        text-align: center; /* Center modal content */
+      }
+
+      .modal-content h2 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: #333; /* Example text color */
+      }
+
+      .modal-content form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px; /* Space between form elements */
+      }
+
+      .modal-content input[type="email"],
+      .modal-content input[type="password"],
+      .modal-content input[type="text"] {
+        padding: 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+      }
+
+      .modal-content button {
+        padding: 12px 20px;
+        background-color: #007bff; /* Example primary button color */
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s ease; /* Smooth hover effect */
+      }
+
+      .modal-content button:hover {
+        background-color: #0056b3;
+      }
+
+      .modal-toggle-link {
+        margin-top: 15px;
+        cursor: pointer;
+        color: #007bff;
+        text-decoration: underline;
+        font-size: 14px;
+      }
+
+      .modal-toggle-link:hover {
+        color: #0056b3;
+      }
+
+      /* Initially hide the account content */
+      #account-content {
+        display: none;
+        padding: 20px; /* Add some padding */
+      }
+
+      #account-content h1,
+      #account-content h2 {
+        color: #333; /* Example text color */
+        margin-bottom: 15px;
+      }
+
+      .slot-item {
+        border: 1px solid #eee;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        display: flex;
+        flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        justify-content: space-between;
+        align-items: center;
+        background-color: #f9f9f9; /* Slight background */
+      }
+
+      .slot-item p {
+        margin: 0;
+        flex-grow: 1; /* Allow text to take up space */
+        margin-right: 10px; /* Space between text and button */
+      }
+
+      .slot-item button {
+        padding: 8px 15px;
+        background-color: #28a745; /* Example success color */
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s ease;
+      }
+
+      .slot-item button:hover {
+        background-color: #218838;
+      }
+
+      #auth-error-message,
+      #auth-reg-error-message {
+        color: red;
+        margin-top: 15px;
+        font-size: 14px;
+      }
+
+      #logout-button {
+        margin-top: 20px;
+        padding: 10px 15px;
+        background-color: #dc3545; /* Example danger color */
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s ease;
+      }
+
+      #logout-button:hover {
+        background-color: #c82333;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Include your website's header/navigation here -->
+    <header>
+      <!-- Your site's header content, including the navigation link to account.html -->
+      <nav>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <!-- Add other navigation links specific to your site -->
+          <li><a href="account.html">Account</a></li>
+          <!-- ENSURE THIS LINK EXISTS IN YOUR SITE'S NAVIGATION -->
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      <!-- Content that requires authentication -->
+      <!-- This div will be shown/hidden by JavaScript -->
+      <section id="account-content">
+        <h1>My Account</h1>
+        <p id="welcome-message">Welcome, User!</p>
+        <p>
+          Your current credit balance:
+          <strong id="credit-balance">Loading...</strong>
+        </p>
+
+        <h2>Available Booking Slots</h2>
+        <div id="available-slots-list">
+          <p>Loading available slots...</p>
+          <!-- Available slots will be loaded here by JavaScript -->
+        </div>
+
+        <button id="logout-button">Logout</button>
+      </section>
+
+      <!-- Authentication Modal -->
+      <!-- This div will be shown/hidden by JavaScript -->
+      <div id="auth-modal" class="modal-overlay">
+        <div class="modal-content">
+          <!-- Login Form Container -->
+          <div id="login-form-container">
+            <h2>Login to Your Account</h2>
+            <form id="login-form">
+              <input
+                type="email"
+                id="login-email"
+                placeholder="Email"
+                required
+              />
+              <input
+                type="password"
+                id="login-password"
+                placeholder="Password"
+                required
+              />
+              <button type="submit">Login</button>
+            </form>
+            <p id="auth-error-message"></p>
+            <!-- Error message display -->
+            <p class="modal-toggle-link" data-target="register-form-container">
+              Need an account? Register here.
+            </p>
+          </div>
+
+          <!-- Registration Form Container (initially hidden) -->
+          <div id="register-form-container" style="display: none">
+            <h2>Register for an Account</h2>
+            <form id="register-form">
+              <input
+                type="text"
+                id="register-name"
+                placeholder="Your Name (Optional)"
+              />
+              <input
+                type="email"
+                id="register-email"
+                placeholder="Email"
+                required
+              />
+              <input
+                type="password"
+                id="register-password"
+                placeholder="Password"
+                required
+              />
+              <button type="submit">Register</button>
+            </form>
+            <p id="auth-reg-error-message"></p>
+            <!-- Registration error message display -->
+            <p class="modal-toggle-link" data-target="login-form-container">
+              Already have an account? Login here.
+            </p>
+          </div>
+
+          <!-- Optional: Google Sign-In button -->
+          <!-- Uncomment and style this if you want to add Google Sign-In -->
+          <!-- <button id="google-signin-button">Sign in with Google</button> -->
+        </div>
+      </div>
+    </main>
+
+    <!-- Include your website's footer here -->
+    <footer>
+      <!-- Your site's footer content -->
+    </footer>
+
+    <!--
+        Initialize Firebase using the modular SDK.
+        This script should come AFTER all the HTML elements it might interact with,
+        but BEFORE any other scripts that depend on Firebase being initialized
+        and service instances being globally available (if you use that approach).
+    -->
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      // Use the specific version you prefer (e.g., 9.22.2 or 11.7.3)
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+      import {
+        getAuth,
+        onAuthStateChanged,
+        signInWithEmailAndPassword,
+        createUserWithEmailAndPassword,
+        signOut,
+      } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+      import {
+        getFirestore,
+        doc,
+        getDoc,
+        collection,
+        query,
+        where,
+        orderBy,
+        getDocs,
+        runTransaction,
+      } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+      import {
+        getFunctions,
+        httpsCallable,
+      } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-functions.js";
+      // import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-analytics.js"; // Uncomment if you need analytics
+
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY", // <--- REPLACE WITH YOUR ACTUAL API KEY
+        authDomain: "YOUR_AUTH_DOMAIN", // <--- REPLACE WITH YOUR ACTUAL AUTH DOMAIN
+        projectId: "YOUR_PROJECT_ID", // <--- REPLACE WITH YOUR ACTUAL PROJECT ID
+        storageBucket: "YOUR_STORAGE_BUCKET", // <--- REPLACE WITH YOUR ACTUAL STORAGE BUCKET
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // <--- REPLACE WITH YOUR ACTUAL MESSAGING SENDER ID
+        appId: "YOUR_APP_ID", // <--- REPLACE WITH YOUR ACTUAL APP ID
+        // measurementId: "YOUR_MEASUREMENT_ID" // <--- REPLACE IF PROVIDED
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+
+      // Get service instances
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      const functions = getFunctions(app); // Make sure you have deployed functions
+
+      // Make service instances globally available for other scripts (if not using modules everywhere)
+      window.auth = auth;
+      window.db = db;
+      window.functions = functions;
+
+      // Optional: Make specific Firebase functions global if needed in other scripts
+      window.onAuthStateChanged = onAuthStateChanged;
+      window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+      window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+      window.signOut = signOut;
+      window.doc = doc; // Firestore doc reference
+      window.getDoc = getDoc; // Firestore getDoc
+      window.collection = collection; // Firestore collection reference
+      window.query = query; // Firestore query
+      window.where = where; // Firestore where clause
+      window.orderBy = orderBy; // Firestore orderBy clause
+      window.getDocs = getDocs; // Firestore getDocs
+      window.runTransaction = runTransaction; // Firestore transaction
+      window.httpsCallable = httpsCallable; // Functions httpsCallable
+
+      // --- Basic Account Page Logic (can be moved to account.js) ---
+
+      // Get references to key HTML elements
+      const accountContent = document.getElementById("account-content");
+      const authModal = document.getElementById("auth-modal");
+      const loginFormContainer = document.getElementById(
+        "login-form-container"
+      );
+      const registerFormContainer = document.getElementById(
+        "register-form-container"
+      );
+      const loginForm = document.getElementById("login-form");
+      const registerForm = document.getElementById("register-form");
+      const authErrorMessage = document.getElementById("auth-error-message");
+      const authRegErrorMessage = document.getElementById(
+        "auth-reg-error-message"
+      );
+      const welcomeMessage = document.getElementById("welcome-message");
+      const creditBalance = document.getElementById("credit-balance");
+      const availableSlotsList = document.getElementById(
+        "available-slots-list"
+      );
+      const logoutButton = document.getElementById("logout-button");
+
+      // Function to show the authentication modal
+      function showAuthModal() {
+        authModal.style.display = "flex"; // Use flex to center content
+        loginFormContainer.style.display = "block"; // Default to showing login form
+        registerFormContainer.style.display = "none";
+        authErrorMessage.textContent = ""; // Clear any previous errors
+        authRegErrorMessage.textContent = "";
+      }
+
+      // Function to hide the authentication modal
+      function hideAuthModal() {
+        authModal.style.display = "none";
+      }
+
+      // Function to toggle between login and registration forms
+      document.querySelectorAll(".modal-toggle-link").forEach((link) => {
+        link.addEventListener("click", function () {
+          const targetId = this.dataset.target;
+          if (targetId === "register-form-container") {
+            loginFormContainer.style.display = "none";
+            registerFormContainer.style.display = "block";
+            authErrorMessage.textContent = ""; // Clear login errors when switching
+          } else {
+            registerFormContainer.style.display = "none";
+            loginFormContainer.style.display = "block";
+            authRegErrorMessage.textContent = ""; // Clear reg errors when switching
+          }
+          authErrorMessage.textContent = ""; // Clear errors on toggle
+          authRegErrorMessage.textContent = "";
+        });
+      });
+
+      // Handle Login Form Submission
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = loginForm.querySelector("#login-email").value;
+        const password = loginForm.querySelector("#login-password").value;
+        authErrorMessage.textContent = ""; // Clear previous errors
+
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+          // onAuthStateChanged listener will handle UI update
+        } catch (error) {
+          console.error("Login Error:", error);
+          // Display user-friendly error message
+          switch (error.code) {
+            case "auth/user-not-found":
+              authErrorMessage.textContent = "No user found with this email.";
+              break;
+            case "auth/wrong-password":
+              authErrorMessage.textContent = "Incorrect password.";
+              break;
+            case "auth/invalid-email":
+              authErrorMessage.textContent = "Invalid email address format.";
+              break;
+            default:
+              authErrorMessage.textContent = "Login failed. Please try again.";
+          }
+        }
+      });
+
+      // Handle Registration Form Submission
+      registerForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = registerForm.querySelector("#register-email").value;
+        const password = registerForm.querySelector("#register-password").value;
+        const name = registerForm.querySelector("#register-name").value; // Optional name
+        authRegErrorMessage.textContent = ""; // Clear previous errors
+
+        try {
+          const userCredential = await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
+          const user = userCredential.user;
+
+          // Create a user document in Firestore
+          await setDoc(doc(db, "users", user.uid), {
+            email: user.email,
+            name: name || "", // Save name if provided
+            credits: 0, // Initialize credits to 0
+          });
+
+          // onAuthStateChanged listener will handle UI update
+        } catch (error) {
+          console.error("Registration Error:", error);
+          // Display user-friendly error message
+          switch (error.code) {
+            case "auth/email-already-in-use":
+              authRegErrorMessage.textContent =
+                "This email address is already in use.";
+              break;
+            case "auth/invalid-email":
+              authRegErrorMessage.textContent = "Invalid email address format.";
+              break;
+            case "auth/weak-password":
+              authRegErrorMessage.textContent =
+                "Password should be at least 6 characters.";
+              break;
+            default:
+              authRegErrorMessage.textContent =
+                "Registration failed. Please try again.";
+          }
+        }
+      });
+
+      // Handle Logout Button Click
+      logoutButton.addEventListener("click", async () => {
+        try {
+          await signOut(auth);
+          // onAuthStateChanged listener will handle UI update
+        } catch (error) {
+          console.error("Logout Error:", error);
+          alert("Logout failed. Please try again.");
+        }
+      });
+
+      // --- Function to handle Auth State Changes ---
+      // This function is called by the onAuthStateChanged listener below
+      // and can also be called from account.js if you move the listener there.
+      window.handleAuthStateChange = async (user) => {
+        if (user) {
+          // User is signed in, show account content and hide modal
+          accountContent.style.display = "block";
+          hideAuthModal();
+          console.log("User signed in:", user.uid); // Log user ID
+
+          // Fetch and display user data
+          fetchUserData(user);
+
+          // Fetch and display available slots
+          fetchAvailableSlots();
+        } else {
+          // User is signed out, hide account content and show modal
+          accountContent.style.display = "none";
+          showAuthModal();
+          console.log("User signed out."); // Log sign out
+        }
+      };
+
+      // --- Fetch and Display User Data ---
+      async function fetchUserData(user) {
+        try {
+          // Use the global db object (or import if account.js is a module)
+          const userDocRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            welcomeMessage.textContent = `Welcome, ${
+              userData.name || user.email
+            }!`;
+            creditBalance.textContent =
+              userData.credits !== undefined ? userData.credits : "N/A"; // Handle case where credits might not be set yet
+          } else {
+            // User document doesn't exist - this shouldn't happen if created on registration
+            console.warn("User document not found for UID:", user.uid);
+            welcomeMessage.textContent = `Welcome, ${user.email}!`; // Still welcome by email
+            creditBalance.textContent = "0"; // Assume 0 credits if doc missing
+            // You might want to create the user document here if it's missing for some reason
+            await setDoc(doc(db, "users", user.uid), {
+              email: user.email,
+              name: "",
+              credits: 0,
+            });
+            console.log("Created missing user document for:", user.uid);
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          // Display an error message to the user on the page
+          welcomeMessage.textContent = `Welcome, ${user.email}!`;
+          creditBalance.textContent = "Error loading credits.";
+        }
+      }
+
+      // --- Fetch and Display Available Slots ---
+      async function fetchAvailableSlots() {
+        try {
+          // Use the global db object (or import if account.js is a module)
+          const slotsCollectionRef = collection(db, "slots");
+          const q = query(
+            slotsCollectionRef,
+            where("isBooked", "==", false),
+            orderBy("startTime")
+          );
+
+          const slotsSnapshot = await getDocs(q);
+
+          availableSlotsList.innerHTML = ""; // Clear previous list
+
+          if (slotsSnapshot.empty) {
+            availableSlotsList.innerHTML =
+              "<p>No available slots at the moment.</p>";
+            return;
+          }
+
+          slotsSnapshot.forEach((doc) => {
+            const slot = doc.data();
+            const slotElement = document.createElement("div");
+            slotElement.classList.add("slot-item"); // Add a class for styling
+
+            // Format the timestamp
+            const startTime = slot.startTime.toDate().toLocaleString();
+            const endTime = slot.endTime.toDate().toLocaleString();
+
+            slotElement.innerHTML = `
+                  <p>${startTime} - ${endTime} (${slot.studio}) - Cost: ${slot.cost} credits</p>
+                  <button class="book-slot-button" data-slot-id="${doc.id}" data-cost="${slot.cost}">Book Now</button>
+                `;
+            availableSlotsList.appendChild(slotElement);
+          });
+
+          // Add event listeners to book buttons
+          document.querySelectorAll(".book-slot-button").forEach((button) => {
+            button.addEventListener("click", handleBooking);
+          });
+        } catch (error) {
+          console.error("Error fetching available slots:", error);
+          availableSlotsList.innerHTML =
+            "<p>Error loading available slots.</p>";
+        }
+      }
+
+      // --- Handle Booking (Client-side part) ---
+      async function handleBooking(event) {
+        const slotId = event.target.dataset.slotId;
+        const slotCost = parseInt(event.target.dataset.cost, 10);
+        const currentUser = auth.currentUser; // Use the global auth object
+
+        if (!currentUser) {
+          console.error("No authenticated user.");
+          showAuthModal();
+          return;
+        }
+
+        // Disable the button to prevent multiple clicks
+        event.target.disabled = true;
+        event.target.textContent = "Booking...";
+
+        // Client-side quick check for credits (the server function will re-check securely)
+        const userDocRef = doc(db, "users", currentUser.uid); // Use global db and doc
+        const userDoc = await getDoc(userDocRef); // Use global getDoc
+        if (!userDoc.exists() || userDoc.data().credits < slotCost) {
+          alert("You don't have enough credits to book this slot.");
+          event.target.disabled = false; // Re-enable button
+          event.target.textContent = "Book Now";
+          return;
+        }
+
+        // Call the Cloud Function to handle the booking
+        try {
+          // Use the global functions object and httpsCallable
+          const bookSlotCallable = httpsCallable(functions, "bookSlot");
+          const result = await bookSlotCallable({ slotId: slotId });
+
+          if (result.data.success) {
+            alert("Booking successful!");
+            // Update UI: refresh user data and available slots
+            fetchUserData(currentUser);
+            fetchAvailableSlots();
+          } else {
+            alert("Booking failed: " + result.data.error);
+          }
+        } catch (error) {
+          console.error("Error calling bookSlot function:", error);
+          // Display a more specific error if it's an HttpsError from the function
+          if (error.code) {
+            alert(`Booking failed: ${error.message}`);
+          } else {
+            alert("An error occurred during booking. Please try again.");
+          }
+        } finally {
+          // Re-enable the button regardless of success or failure
+          event.target.disabled = false;
+          event.target.textContent = "Book Now";
+        }
+      }
+
+      // --- Firebase Auth State Listener ---
+      // This listener runs whenever the user's sign-in state changes
+      onAuthStateChanged(auth, (user) => {
+        handleAuthStateChange(user); // Call the function to update UI
+      });
+    </script>
+
+    <!--
+        Link to your custom JavaScript file for additional account page logic.
+        This script will run after the Firebase initialization script.
+        If you move the functions from the script tag above into account.js,
+        make sure account.js is loaded as a type="module" and imports
+        the necessary Firebase functions or uses the global window variables.
+     -->
+    <!-- <script src="scripts/account.js" type="module"></script> -->
+    <!-- OR if not using modules in account.js: -->
+    <!-- <script src="scripts/account.js"></script> -->
+  </body>
+</html>
